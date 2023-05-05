@@ -1,13 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    @apply bg-slate-200;
+}
+a {
+    @apply underline text-blue-600 hover:text-blue-800
+ }
+
+.App section {
+    @apply py-10 px-5;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.Field {
+    @apply flex flex-row justify-start gap-4 pb-3;
+}
+.Field > label {
+    @apply w-80;
+}
+
+.Field .Jfv_Field {
+}
+.Jfv_Field.isInvalid {
+    @apply border-red-500;
+}
+.Jfv_FieldError {
+    @apply text-red-500;
+}
+
+.form-input,
+.form-textarea {
+    @apply w-full;
 }

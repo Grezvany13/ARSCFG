@@ -6,15 +6,23 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@uiw/react-textarea-code-editor": "^2.1.1",
+    "generate-password-ts": "^1.6.3",
+    "object-path": "^0.11.8",
+    "randomfriendlyphrase": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.8.0",
+    "react-jsonschema-form-validation": "^0.5.6",
     "react-scripts": "5.0.1",
+    "react-select": "^5.7.3",
+    "tailwindcss-all": "^0.0.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -34,5 +42,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.3",
+    "react-app-rewired": "^2.2.1",
+    "tailwindcss": "^3.3.2"
   }
 }
