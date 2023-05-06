@@ -21,7 +21,7 @@ const exportConfig = (name, data) => {
   }
 
 const AsyncFormField = (props) => {
-    const {name, data, value, label, method} = props;
+    const {name, data, value, label, method, mods} = props;
 
     let type ='select';
 
@@ -31,6 +31,7 @@ const AsyncFormField = (props) => {
         let data = JSON.parse(localStorage.getItem('reforger-workshop-cache'));
 
         if (data === null) {
+            console.log('New API request')
             let response = await fetch('https://files.ofpisnotdead.com/reforger-workshop.json');
             data = await response.json();
         }
@@ -63,7 +64,9 @@ const AsyncFormField = (props) => {
                 }
             }
             return null;
-        }).filter((item) => item !== null);
+        }).filter((item) => item !== null).filter((item) => {
+            return (mods.find((m) => m.name === item.label));
+        });
     }
     if (method === 'mods') {
         options = jsonData.data.map((item) => {
@@ -240,7 +243,7 @@ const FormField = (props) => {
     );
 };
 
-const DemoForm = (props) => {
+const ServerConfigForm = (props) => {
 	const [formData, setFormData] = useState({
         dedicatedServerId: randomFriendlyPhrase(),
         region: navigator.language.split('-')[1],
@@ -365,7 +368,23 @@ const DemoForm = (props) => {
                         value={formData.adminPassword}
                     />
                 </div>
+
+                <hr className='mb-4' />
             
+                <div className="text-gray-600 mb-2">
+                    <p className="font-medium text-lg">Mods</p>
+                    <p></p>
+                </div>
+                <div className="lg:col-span-2">
+                    <AsyncFormField
+                        label="Mods"
+                        name="game.mods"
+                        data={EnfusionSchema.properties.game.properties.mods}
+                        value={formData.game.mods}
+                        method="mods"
+                    />
+                </div>
+                
                 <hr className='mb-4' />
             
                 <div className="text-gray-600 mb-2">
@@ -391,6 +410,7 @@ const DemoForm = (props) => {
                         data={EnfusionSchema.properties.game.properties.scenarioId}
                         value={formData.game.scenarioId}
                         method="scenarios"
+                        mods={formData.game.mods}
                     />
                     <FormField
                         label="Scenario Name"
@@ -430,22 +450,6 @@ const DemoForm = (props) => {
                         name="game.supportedGameClientTypes[]"
                         data={EnfusionSchema.properties.game.properties.supportedGameClientTypes}
                         value={formData.game.supportedGameClientTypes}
-                    />
-                </div>
-            
-                <hr className='mb-4' />
-            
-                <div className="text-gray-600 mb-2">
-                    <p className="font-medium text-lg">Mods</p>
-                    <p></p>
-                </div>
-                <div className="lg:col-span-2">
-                    <AsyncFormField
-                        label="Mods"
-                        name="game.mods"
-                        data={EnfusionSchema.properties.game.properties.mods}
-                        value={formData.game.mods}
-                        method="mods"
                     />
                 </div>
             
@@ -518,7 +522,6 @@ const DemoForm = (props) => {
                         name="game.gameProperties.missionHeader"
                         data={EnfusionSchema.properties.game.properties.gameProperties.properties.missionHeader}
                         value={formData.game.gameProperties.missionHeader}
-                        form={{formData, setFormData}}
                     />
                 </div>
             </div>
@@ -557,4 +560,4 @@ const DemoForm = (props) => {
 	);
 }
 
-export default DemoForm;
+export default ServerConfigForm;
