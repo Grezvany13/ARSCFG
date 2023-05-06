@@ -8,7 +8,7 @@ function App() {
     <div className="App">
         <header className="bg-gray-900 text-white py-10">
             <div className="max-w-2xl mx-auto">
-                <div className="flex flex-col md:flex-row md:justify-between items-center text-sm text-gray-400">
+                <div className="flex flex-col md:flex-row justify-start items-center text-sm text-gray-400">
                     <div>
                         <h1 className='text-6xl  font-bold'>ARSCFG</h1>
                         <h2 className='text-sm'>Arma Reforger Server Config File Generator</h2>

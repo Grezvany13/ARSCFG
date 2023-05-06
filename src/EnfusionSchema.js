@@ -121,7 +121,7 @@ const EnfusionSchema = {
                     minLength: 0
                 },
                 supportedGameClientTypes: {
-                    description: "Supported Platform Type (Crossplay is not enabled at this time, PC is set default)",
+                    description: "Supported Platform Type (PC is set default, PC is required)",
                     type: "array",
                     minItems: 1,
                     default: "PLATFORM_PC",
