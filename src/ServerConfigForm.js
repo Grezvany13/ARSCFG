@@ -7,8 +7,9 @@ import CodeEditor from '@uiw/react-textarea-code-editor';
 import randomFriendlyPhrase from 'randomfriendlyphrase';
 import generator from 'generate-password-ts';
 
-import EnfusionSchema from './EnfusionSchema';
-
+//import EnfusionSchema from './EnfusionSchema';
+import EnfusionSchemaJson from './ArmaReforgerServerSchema.json';
+const EnfusionSchema = EnfusionSchemaJson.definitions;
 
 const exportConfig = (name, data) => {
     const fileData = JSON.stringify(data, null, 4);
@@ -31,7 +32,6 @@ const AsyncFormField = (props) => {
         let data = JSON.parse(localStorage.getItem('reforger-workshop-cache'));
 
         if (data === null) {
-            console.log('New API request')
             let response = await fetch('https://files.ofpisnotdead.com/reforger-workshop.json');
             data = await response.json();
         }
@@ -125,7 +125,7 @@ const AsyncFormField = (props) => {
                         }}
                     />
                 )}
-                {data.description && (
+                {data?.description && (
                     <p className="py-2 text-sm text-gray-600">{data.description}</p>
                 )}
                 <FieldError
@@ -232,7 +232,7 @@ const FormField = (props) => {
                         className={'form-' + typeClass}
                     />                    
                 )}
-                {data.description && (
+                {data?.description && (
                     <p className="py-2 text-sm text-gray-600">{data.description}</p>
                 )}
                 <FieldError
@@ -244,20 +244,23 @@ const FormField = (props) => {
 };
 
 const ServerConfigForm = (props) => {
+    const [formDataClean, setformDataClean] = useState({});
+
 	const [formData, setFormData] = useState({
-        dedicatedServerId: randomFriendlyPhrase(),
-        region: navigator.language.split('-')[1],
         gameHostBindAddress: '0.0.0.0',
         gameHostBindPort: 2001,
-        gameHostRegisterBindAddress: '',
+        gameHostRegisterBindAddress: 'localhost',
         gameHostRegisterPort: 2001,
-        a2sQueryEnabled: true,
-        steamQueryPort: 17777,
+        a2s: {
+            address: '',
+            port: 17777
+        },
         adminPassword: generator.generate({length: 12, numbers: true, strict: true}),
         game: {
             name: '',
             password: '',
             scenarioId: '',
+            gameNumber: '',
             scenarioName: '',
             playerCountLimit: 32,
             autoJoinable: false,
@@ -276,18 +279,62 @@ const ServerConfigForm = (props) => {
                 missionHeader: {}
             },
             mods: []
+        },
+        operating: {
+            lobbyPlayerSynchronise: true,
+            playerSaveTime: 120
         }
-    });    
+    });
+
+    const formDataCleaner = (data, group) => {
+        let dataArray = Object.entries(data);
+
+        let newDataArray = dataArray.map(([key, value]) => {
+            switch (group) {
+                case 'a2s': group = 'A2S'; break;
+                case 'game': group = 'Game'; break;
+                case 'gameProperties': group = 'GameProperties'; break;
+                case 'mods': group = 'Mods'; break;
+                case 'missionheader': group = 'Missionheader'; break;
+                case 'operating': group = 'Operating'; break;
+            }
+
+            if (typeof value == "object") {
+                return [key, formDataCleaner(value, key)];
+            }
+            if (typeof value == "array") {
+                return [key, formDataCleaner(Object.fromEntries(value), key)];
+            }
+
+            if (EnfusionSchema[group]?.required.includes(key)) {
+                return [key, value];
+            }
+
+            if (
+                ((typeof value === "string" || typeof value === "number") && value !== '')
+                || (typeof value === "boolean")
+            ) {
+                if (EnfusionSchema[group]?.properties[key].default === value) {
+                    return [];
+                }
+                return [key, value];
+            }
+            return [];
+        });
+
+        return Object.fromEntries(newDataArray);
+    }
 	
 	const handleChange = (newData) => {
-		// newData is a copy of the object formData with properties (and nested properties)
-		// updated using immutability pattern for each change occured in the form.
 		setFormData(newData);
+
+        let cleanData = formDataCleaner(newData, 'Main');
+
+        setformDataClean(cleanData);
 	}
 	
 	const handleSubmit = () => {
-		const { doWhateverYouWant } = props;
-		doWhateverYouWant(formData); // Do whatever you want with the form data
+        // nothing to submit, because everything happens onChange
 	}
 
 	return (
@@ -300,71 +347,44 @@ const ServerConfigForm = (props) => {
             <div className="bg-white rounded shadow-lg p-4 px-4 md:p-8 mb-6">
                 
                 <div className="text-gray-600 mb-2">
-                    <p className="font-medium text-lg">Base Settings</p>
+                    <p className="font-medium text-lg">Main</p>
                     <p></p>
                 </div>
                 <div className="lg:col-span-2">
                     <FormField
-                        label="Server ID"
-                        name="dedicatedServerId"
-                        data={EnfusionSchema.properties.dedicatedServerId}
-                        value={formData.dedicatedServerId}
-                    />
-                    <FormField
-                        label="Region"
-                        name="region"
-                        data={EnfusionSchema.properties.region}
-                        value={formData.region}
-                    />
-                    <FormField
                         label="Host Bind Address"
                         name="gameHostBindAddress"
-                        data={EnfusionSchema.properties.gameHostBindAddress}
+                        data={EnfusionSchema.Main.properties.gameHostBindAddress}
                         value={formData.gameHostBindAddress}
                     />
                     <FormField
                         label="Host Bind Port"
                         name="gameHostBindPort"
-                        data={EnfusionSchema.properties.gameHostBindPort}
+                        data={EnfusionSchema.Main.properties.gameHostBindPort}
                         value={formData.gameHostBindPort}
-                        min={EnfusionSchema.properties.gameHostBindPort.minimum}
-                        max={EnfusionSchema.properties.gameHostBindPort.maximum}
+                        min={EnfusionSchema.Main.properties.gameHostBindPort.minimum}
+                        max={EnfusionSchema.Main.properties.gameHostBindPort.maximum}
                         step="1"
                     />
                     <FormField
                         label="Host Register Bind Address"
                         name="gameHostRegisterBindAddress"
-                        data={EnfusionSchema.properties.gameHostRegisterBindAddress}
+                        data={EnfusionSchema.Main.properties.gameHostRegisterBindAddress}
                         value={formData.gameHostRegisterBindAddress}
                     />
                     <FormField
                         label="Host Register Port"
                         name="gameHostRegisterPort"
-                        data={EnfusionSchema.properties.gameHostRegisterPort}
+                        data={EnfusionSchema.Main.properties.gameHostRegisterPort}
                         value={formData.gameHostRegisterPort}
-                        min={EnfusionSchema.properties.gameHostRegisterPort.minimum}
-                        max={EnfusionSchema.properties.gameHostRegisterPort.maximum}
-                        step="1"
-                    />
-                    <FormField
-                        label="a2s Query Enabled"
-                        name="a2sQueryEnabled"
-                        data={EnfusionSchema.properties.a2sQueryEnabled}
-                        value={formData.a2sQueryEnabled}
-                    />
-                    <FormField
-                        label="Steam Query Port"
-                        name="steamQueryPort"
-                        data={EnfusionSchema.properties.steamQueryPort}
-                        value={formData.steamQueryPort}
-                        min={EnfusionSchema.properties.steamQueryPort.minimum}
-                        max={EnfusionSchema.properties.steamQueryPort.maximum}
+                        min={EnfusionSchema.Main.properties.gameHostRegisterPort.minimum}
+                        max={EnfusionSchema.Main.properties.gameHostRegisterPort.maximum}
                         step="1"
                     />
                     <FormField
                         label="Admin Password"
                         name="adminPassword"
-                        data={EnfusionSchema.properties.adminPassword}
+                        data={EnfusionSchema.Main.properties.adminPassword}
                         value={formData.adminPassword}
                     />
                 </div>
@@ -372,14 +392,38 @@ const ServerConfigForm = (props) => {
                 <hr className='mb-4' />
             
                 <div className="text-gray-600 mb-2">
-                    <p className="font-medium text-lg">Mods</p>
+                    <p className="font-medium text-lg">Main &gt; A2S</p>
+                    <p></p>
+                </div>
+                <div className="lg:col-span-2">
+                <FormField
+                        label="A2S Address"
+                        name="address"
+                        data={EnfusionSchema.A2S.properties.address}
+                        value={formData.a2s.address}
+                    />
+                    <FormField
+                        label="A2S Port"
+                        name="port"
+                        data={EnfusionSchema.A2S.properties.port}
+                        value={formData.a2s.port}
+                        min={EnfusionSchema.A2S.properties.port.minimum}
+                        max={EnfusionSchema.A2S.properties.port.maximum}
+                        step="1"
+                    />
+                </div>
+                
+                <hr className='mb-4' />
+            
+                <div className="text-gray-600 mb-2">
+                    <p className="font-medium text-lg">Game &gt; Mods</p>
                     <p></p>
                 </div>
                 <div className="lg:col-span-2">
                     <AsyncFormField
                         label="Mods"
                         name="game.mods"
-                        data={EnfusionSchema.properties.game.properties.mods}
+                        data={EnfusionSchema.Mods.properties.mods}
                         value={formData.game.mods}
                         method="mods"
                     />
@@ -395,19 +439,28 @@ const ServerConfigForm = (props) => {
                     <FormField
                         label="Server Name"
                         name="game.name"
-                        data={EnfusionSchema.properties.game.properties.name}
+                        data={EnfusionSchema.Game.properties.name}
                         value={formData.game.name}
+                    />
+                    <FormField
+                        label="Game Number"
+                        name="game.gameNumber"
+                        data={EnfusionSchema.Game.properties.gameNumber}
+                        value={formData.game.gameNumber}
+                        min={EnfusionSchema.Game.properties.gameNumber.minimum}
+                        max={EnfusionSchema.Game.properties.gameNumber.maximum}
+                        step="1"
                     />
                     <FormField
                         label="Server Password"
                         name="game.password"
-                        data={EnfusionSchema.properties.game.properties.password}
+                        data={EnfusionSchema.Game.properties.password}
                         value={formData.game.password}
                     />
                     <AsyncFormField
                         label="Scenario ID"
                         name="game.scenarioId"
-                        data={EnfusionSchema.properties.game.properties.scenarioId}
+                        data={EnfusionSchema.Game.properties.scenarioId}
                         value={formData.game.scenarioId}
                         method="scenarios"
                         mods={formData.game.mods}
@@ -415,40 +468,40 @@ const ServerConfigForm = (props) => {
                     <FormField
                         label="Scenario Name"
                         name="game.scenarioName"
-                        data={EnfusionSchema.properties.game.properties.scenarioName}
+                        data={EnfusionSchema.Game.properties.scenarioName}
                         value={formData.game.scenarioName}
                     />
                     <FormField
                         label="Player Limit"
                         name="game.playerCountLimit"
-                        data={EnfusionSchema.properties.game.properties.playerCountLimit}
+                        data={EnfusionSchema.Game.properties.playerCountLimit}
                         value={formData.game.playerCountLimit}
-                        min={EnfusionSchema.properties.game.properties.playerCountLimit.minimum}
-                        max={EnfusionSchema.properties.game.properties.playerCountLimit.maximum}
+                        min={EnfusionSchema.Game.properties.playerCountLimit.minimum}
+                        max={EnfusionSchema.Game.properties.playerCountLimit.maximum}
                         step="1"
                     />
                     <FormField
                         label="Auto Joinable"
                         name="game.autoJoinable"
-                        data={EnfusionSchema.properties.game.properties.autoJoinable}
+                        data={EnfusionSchema.Game.properties.autoJoinable}
                         value={formData.game.autoJoinable}
                     />
                     <FormField
                         label="Visible"
                         name="game.visible"
-                        data={EnfusionSchema.properties.game.properties.visible}
+                        data={EnfusionSchema.Game.properties.visible}
                         value={formData.game.visible}
                     />
                     <FormField
                         label="Game Mode"
                         name="game.gameMode"
-                        data={EnfusionSchema.properties.game.properties.gameMode}
+                        data={EnfusionSchema.Game.properties.gameMode}
                         value={formData.game.gameMode}
                     />
                     <FormField
                         label="Supported Client Types"
                         name="game.supportedGameClientTypes[]"
-                        data={EnfusionSchema.properties.game.properties.supportedGameClientTypes}
+                        data={EnfusionSchema.Game.properties.supportedGameClientTypes}
                         value={formData.game.supportedGameClientTypes}
                     />
                 </div>
@@ -456,72 +509,94 @@ const ServerConfigForm = (props) => {
                 <hr className='mb-4' />
             
                 <div className="text-gray-600 mb-2">
-                    <p className="font-medium text-lg">Game Properties</p>
+                    <p className="font-medium text-lg">Game &gt; GameProperties</p>
                     <p></p>
                 </div>
                 <div className="lg:col-span-2">
                     <FormField
                         label="Server Max View Distance"
                         name="game.gameProperties.serverMaxViewDistance"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.serverMaxViewDistance}
+                        data={EnfusionSchema.GameProperties.properties.serverMaxViewDistance}
                         value={formData.game.gameProperties.serverMaxViewDistance}
-                        min={EnfusionSchema.properties.game.properties.gameProperties.properties.serverMaxViewDistance.minimum}
-                        max={EnfusionSchema.properties.game.properties.gameProperties.properties.serverMaxViewDistance.maximum}
+                        min={EnfusionSchema.GameProperties.properties.serverMaxViewDistance.minimum}
+                        max={EnfusionSchema.GameProperties.properties.serverMaxViewDistance.maximum}
                         step="1"
                     />
                     <FormField
                         label="Server Min Grass Distance"
                         name="game.gameProperties.serverMinGrassDistance"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.serverMinGrassDistance}
+                        data={EnfusionSchema.GameProperties.properties.serverMinGrassDistance}
                         value={formData.game.gameProperties.serverMaxViewDistance}
-                        min={EnfusionSchema.properties.game.properties.gameProperties.properties.serverMinGrassDistance.minimum}
-                        max={EnfusionSchema.properties.game.properties.gameProperties.properties.serverMinGrassDistance.maximum}
+                        min={EnfusionSchema.GameProperties.properties.serverMinGrassDistance.minimum}
+                        max={EnfusionSchema.GameProperties.properties.serverMinGrassDistance.maximum}
                         step="1"
                     />
                     <FormField
                         label="Netword View Distance"
                         name="game.gameProperties.networkViewDistance"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.networkViewDistance}
+                        data={EnfusionSchema.GameProperties.properties.networkViewDistance}
                         value={formData.game.gameProperties.networkViewDistance}
-                        min={EnfusionSchema.properties.game.properties.gameProperties.properties.networkViewDistance.minimum}
-                        max={EnfusionSchema.properties.game.properties.gameProperties.properties.networkViewDistance.maximum}
+                        min={EnfusionSchema.GameProperties.properties.networkViewDistance.minimum}
+                        max={EnfusionSchema.GameProperties.properties.networkViewDistance.maximum}
                         step="1"
                     />
                     <FormField
                         label="Disable Third Person"
                         name="game.gameProperties.disableThirdPerson"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.disableThirdPerson}
+                        data={EnfusionSchema.GameProperties.properties.disableThirdPerson}
                         value={formData.game.gameProperties.disableThirdPerson}
                     />
                     <FormField
                         label="Fast Validation"
                         name="game.gameProperties.fastValidation"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.fastValidation}
+                        data={EnfusionSchema.GameProperties.properties.fastValidation}
                         value={formData.game.gameProperties.fastValidation}
                     />
                     <FormField
                         label="BattlEye"
                         name="game.gameProperties.battlEye"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.battlEye}
+                        data={EnfusionSchema.GameProperties.properties.battlEye}
                         value={formData.game.gameProperties.battlEye}
                     />
                     <FormField
                         label="VON Disable UI"
                         name="game.gameProperties.VONDisableUI"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.VONDisableUI}
+                        data={EnfusionSchema.GameProperties.properties.VONDisableUI}
                         value={formData.game.gameProperties.VONDisableUI}
                     />
                     <FormField
                         label="VON Disable Direct Speech UI"
                         name="game.gameProperties.VONDisableDirectSpeechUI"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.VONDisableDirectSpeechUI}
+                        data={EnfusionSchema.GameProperties.properties.VONDisableDirectSpeechUI}
                         value={formData.game.gameProperties.VONDisableDirectSpeechUI}
                     />
                     <FormField
                         label="Mission Header"
                         name="game.gameProperties.missionHeader"
-                        data={EnfusionSchema.properties.game.properties.gameProperties.properties.missionHeader}
+                        data={EnfusionSchema.MissionHeader}
                         value={formData.game.gameProperties.missionHeader}
+                    />
+                </div>
+
+                <hr className='mb-4' />
+            
+                <div className="text-gray-600 mb-2">
+                    <p className="font-medium text-lg">Main &gt; Operating</p>
+                    <p></p>
+                </div>
+                <div className="lg:col-span-2">
+                    <FormField
+                        label="Lobby Player Synchronise"
+                        name="operating.lobbyPlayerSynchronise"
+                        data={EnfusionSchema.Operating.properties.lobbyPlayerSynchronise}
+                        value={formData.operating.lobbyPlayerSynchronise}
+                    />
+                    <FormField
+                        label="Player Save Time"
+                        name="operating.playerSaveTime"
+                        data={EnfusionSchema.Operating.properties.playerSaveTime}
+                        value={formData.operating.playerSaveTime}
+                        step="1"
                     />
                 </div>
             </div>
@@ -533,14 +608,14 @@ const ServerConfigForm = (props) => {
                 </div>
                 <div className="lg:col-span-2">
                     <CodeEditor
-                        value={JSON.stringify(formData, null, 4)}
+                        value={JSON.stringify(formDataClean, null, 4)}
                         language="json"
                         minHeight={500}
                     />
                 </div>
                 <div className="lg:col-span-2 mt-3">
                     <button
-                        onClick={() => exportConfig(formData.dedicatedServerId, formData)}
+                        onClick={() => exportConfig('config', formDataClean)}
                         className='rounded-lg px-4 py-2 bg-blue-500 text-blue-100 hover:bg-blue-600 duration-300'
                     >
                         <div className="flex justify-center items-center relative">

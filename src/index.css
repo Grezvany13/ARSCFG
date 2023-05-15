@@ -33,3 +33,34 @@ a {
 .form-textarea {
     @apply w-full;
 }
+
+
+/* pagination */
+.pagination {
+    @apply inline-flex -space-x-px;
+}
+.pagination li a {
+    @apply px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white no-underline;
+  }
+  .pagination li.previous a,
+  .pagination li.next a,
+  .pagination li.break a {
+    @apply px-3 py-2 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white;
+  }
+  .pagination li.previous a {
+    @apply  rounded-l-lg;
+  }
+  .pagination li.next a {
+    @apply  rounded-r-lg;
+  }
+
+  .pagination li.active a {
+    @apply px-3 py-2 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white;
+  }
+  .pagination li.disabled a {
+    color: grey;
+  }
+  .pagination li.disable,
+  .pagination li.disabled a {
+    cursor: default;
+  }
