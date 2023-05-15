@@ -4,7 +4,7 @@ import { Field, FieldError, Form } from 'react-jsonschema-form-validation';
 import Select from 'react-select';
 import CodeEditor from '@uiw/react-textarea-code-editor';
 
-import randomFriendlyPhrase from 'randomfriendlyphrase';
+//import randomFriendlyPhrase from 'randomfriendlyphrase';
 import generator from 'generate-password-ts';
 
 //import EnfusionSchema from './EnfusionSchema';
@@ -297,13 +297,11 @@ const ServerConfigForm = (props) => {
                 case 'mods': group = 'Mods'; break;
                 case 'missionheader': group = 'Missionheader'; break;
                 case 'operating': group = 'Operating'; break;
+                default: break;
             }
 
-            if (typeof value == "object") {
+            if (typeof value === "object") {
                 return [key, formDataCleaner(value, key)];
-            }
-            if (typeof value == "array") {
-                return [key, formDataCleaner(Object.fromEntries(value), key)];
             }
 
             if (EnfusionSchema[group]?.required.includes(key)) {
