@@ -524,7 +524,7 @@ const ServerConfigForm = (props) => {
                         label="Server Min Grass Distance"
                         name="game.gameProperties.serverMinGrassDistance"
                         data={EnfusionSchema.GameProperties.properties.serverMinGrassDistance}
-                        value={formData.game.gameProperties.serverMaxViewDistance}
+                        value={formData.game.gameProperties.serverMinGrassDistance}
                         min={EnfusionSchema.GameProperties.properties.serverMinGrassDistance.minimum}
                         max={EnfusionSchema.GameProperties.properties.serverMinGrassDistance.maximum}
                         step="1"
