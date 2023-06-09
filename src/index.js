@@ -12,6 +12,8 @@ import App from './App';
 import Root from './Root';
 import Mods from './Mods';
 
+import Test from './Test';
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -24,6 +26,10 @@ const router = createBrowserRouter([
             {
                 path: "/mods",
                 element: <Mods />
+            },
+            {
+                path: "/test",
+                element: <Test />
             }
         ]
     },

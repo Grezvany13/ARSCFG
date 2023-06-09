@@ -7,9 +7,7 @@ import CodeEditor from '@uiw/react-textarea-code-editor';
 //import randomFriendlyPhrase from 'randomfriendlyphrase';
 import generator from 'generate-password-ts';
 
-//import EnfusionSchema from './EnfusionSchema';
-import EnfusionSchemaJson from './ArmaReforgerServerSchema.json';
-const EnfusionSchema = EnfusionSchemaJson.definitions;
+import EnfusionSchema from './ReforgerSchema.json';
 
 const exportConfig = (name, data) => {
     const fileData = JSON.stringify(data, null, 4);
@@ -22,13 +20,17 @@ const exportConfig = (name, data) => {
   }
 
 const AsyncFormField = (props) => {
-    const {name, data, value, label, method, mods} = props;
+    const {name, data, value, method, mods} = props;
 
     let type ='select';
+    let label = data.title;
 
     const [jsonData, setJsonData] = useState(null);
 
     const getJsonData = async () => {
+
+        // TODO: implement invalidation time, since localStorage is "forever"
+
         let data = JSON.parse(localStorage.getItem('reforger-workshop-cache'));
 
         if (data === null) {
@@ -66,6 +68,23 @@ const AsyncFormField = (props) => {
             return null;
         }).filter((item) => item !== null).filter((item) => {
             return (mods.find((m) => m.name === item.label));
+        });
+        let vanilla = [];
+        vanilla.push({
+            value: '{90F086877C27B6F6}Missions/99_Tutorial.conf',
+            label: '{90F086877C27B6F6}Missions/99_Tutorial.conf'
+        });
+        vanilla.push({
+            value: '{ECC61978EDCC2B5A}Missions/23_Campaign.conf',
+            label: '{ECC61978EDCC2B5A}Missions/23_Campaign.conf'
+        });
+        vanilla.push({
+            value: '{59AD59368755F41A}Missions/21_GM_Eden.conf',
+            label: '{59AD59368755F41A}Missions/21_GM_Eden.conf'
+        });
+        options.unshift({
+            label: 'Official scenarios',
+            options: vanilla
         });
     }
     if (method === 'mods') {
@@ -137,12 +156,13 @@ const AsyncFormField = (props) => {
 };
 
 const FormField = (props) => {
-    const {name, data, value, label} = props;
+    const {name, data, value} = props;
 
     let type ='text';
     let typeClass ='input';
     let options = [];
-    let defaultValue = value;
+    let defaultValue = value ?? "";
+    let label = data.title;
 
     switch(data.type) {
         default:
@@ -150,6 +170,7 @@ const FormField = (props) => {
             type ='text';
             break;
         case 'integer':
+        case 'number':
             type = 'number';
             break;
         case 'boolean':
@@ -191,7 +212,7 @@ const FormField = (props) => {
                         options={options}
                         isClearable
                         isMulti
-                        defaultValue={defaultValue || [data?.default]}
+                        defaultValue={defaultValue ?? [data?.default]}
                         onChange={(newVal, handleFieldChange) => {
                             let newName = name.split('[]')[0];
                             newVal = newVal.map((item) => {
@@ -205,7 +226,7 @@ const FormField = (props) => {
                     <Field
                         id={name}
                         name={name}
-                        value={defaultValue || data?.value}
+                        value={defaultValue}
                         language="json"
                         component={CodeEditor}
                         onChange={(newVal, handleFieldChange) => {
@@ -228,7 +249,7 @@ const FormField = (props) => {
                         id={name}
                         type={type}
                         name={name}
-                        value={defaultValue || data?.default}
+                        value={defaultValue ?? data?.default}
                         className={'form-' + typeClass}
                     />                    
                 )}
@@ -244,98 +265,135 @@ const FormField = (props) => {
 };
 
 const ServerConfigForm = (props) => {
-    const [formDataClean, setformDataClean] = useState({});
-
 	const [formData, setFormData] = useState({
-        gameHostBindAddress: '0.0.0.0',
-        gameHostBindPort: 2001,
-        gameHostRegisterBindAddress: 'localhost',
-        gameHostRegisterPort: 2001,
+        bindAddress: '',
+        bindPort: 2001,
+        publicAddress: '',
+        publicPort: 2001,
         a2s: {
             address: '',
             port: 17777
         },
-        adminPassword: generator.generate({length: 12, numbers: true, strict: true}),
         game: {
             name: '',
             password: '',
+            passwordAdmin: generator.generate({length: 12, numbers: true, strict: true}),
             scenarioId: '',
-            gameNumber: '',
-            scenarioName: '',
-            playerCountLimit: 32,
-            autoJoinable: false,
-            visible: false,
-            gameMode: '',
+            playerCountLimit: 127,
+            visible: true,
+            crossPlatform: false,
             supportedGameClientTypes: [],
             gameProperties: {
                 serverMaxViewDistance: 1600,
-                serverMinGrassDistance: 50,
-                networkViewDistance: 500,
+                serverMinGrassDistance: 0,
+                networkViewDistance: 1500,
                 disableThirdPerson: false,
-                fastValidation: true,
+                fastValidation: false,
                 battlEye: true,
                 VONDisableUI: false,
                 VONDisableDirectSpeechUI: false,
-                missionHeader: {}
+                missionHeader: ''
             },
             mods: []
         },
         operating: {
             lobbyPlayerSynchronise: true,
-            playerSaveTime: 120
+            playerSaveTime: 120,
+            aiLimit: -1
         }
     });
 
-    const formDataCleaner = (data, group) => {
+    const formDataCleaner = (data, group, isArray) => {
         let dataArray = Object.entries(data);
 
         let newDataArray = dataArray.map(([key, value]) => {
-            switch (group) {
-                case 'a2s': group = 'A2S'; break;
-                case 'game': group = 'Game'; break;
-                case 'gameProperties': group = 'GameProperties'; break;
-                case 'mods': group = 'Mods'; break;
-                case 'missionheader': group = 'Missionheader'; break;
-                case 'operating': group = 'Operating'; break;
-                default: break;
-            }
-
             if (typeof value === "object") {
-                return [key, formDataCleaner(value, key)];
+                // custom handling for game.mods
+                // array with objects
+                if (key === 'mods') {
+                    let temp = formDataCleaner(value, key, true);
+                    let newTemp = temp.map((value, index) => {
+                        return value[1];
+                    });
+                    if (newTemp.length === 0) {
+                        return [];
+                    }
+                    return [key, newTemp];
+                }
+                // custom handling for game.supportedGameClientTypes
+                // flat array
+                if (key === 'supportedGameClientTypes') {
+                    let temp = formDataCleaner(value, key, true);
+                    let newTemp = temp.map((value, index) => {
+                        return value[1];
+                    });
+                    if (newTemp.length === 0) {
+                        return [];
+                    }
+                    return [key, newTemp];
+                }
+                let temp = [key, formDataCleaner(value, key)];
+                
+                // remove empty arrays/objects
+                if (Object.keys(temp[1]).length === 0
+                || temp[1].length === 0) {
+                    return [];
+                }
+                return temp;
             }
 
-            if (EnfusionSchema[group]?.required.includes(key)) {
+            if (
+                EnfusionSchema[group]?.required.includes(key)
+                || EnfusionSchema.definitions[group]?.required?.includes(key)
+            ) {
                 return [key, value];
             }
 
             if (
                 ((typeof value === "string" || typeof value === "number") && value !== '')
                 || (typeof value === "boolean")
+                || (typeof value === "object" && (
+                    Object.keys(value).length === 0
+                    || value.length === 0
+                ))
             ) {
-                if (EnfusionSchema[group]?.properties[key].default === value) {
+                if (
+                    EnfusionSchema.properties[key]?.default === value
+                    || EnfusionSchema[group]?.properties[key]?.default === value
+                    || EnfusionSchema.definitions[group]?.properties[key]?.default === value
+                ) {
                     return [];
                 }
                 return [key, value];
             }
             return [];
-        });
+        }).filter(([key, value]) => value !== undefined);
 
+        if (isArray) {
+            return newDataArray;
+        }
         return Object.fromEntries(newDataArray);
     }
+
+    const [formDataClean, setformDataClean] = useState(formDataCleaner(formData));
 	
 	const handleChange = (newData) => {
 		setFormData(newData);
 
-        let cleanData = formDataCleaner(newData, 'Main');
+        let cleanData = formDataCleaner(newData);
 
         setformDataClean(cleanData);
 	}
 	
-	const handleSubmit = () => {
+	const handleSubmit = (event) => {
+        console.log(event)
+        event.preventDefault();
         // nothing to submit, because everything happens onChange
+        return false;
 	}
 
 	return (
+        <>
 		<Form
 			data={formData}
 			onChange={handleChange}
@@ -350,40 +408,30 @@ const ServerConfigForm = (props) => {
                 </div>
                 <div className="lg:col-span-2">
                     <FormField
-                        label="Host Bind Address"
-                        name="gameHostBindAddress"
-                        data={EnfusionSchema.Main.properties.gameHostBindAddress}
-                        value={formData.gameHostBindAddress}
+                        name="bindAddress"
+                        data={EnfusionSchema.properties.bindAddress}
+                        value={formData.bindAddress}
                     />
                     <FormField
-                        label="Host Bind Port"
-                        name="gameHostBindPort"
-                        data={EnfusionSchema.Main.properties.gameHostBindPort}
-                        value={formData.gameHostBindPort}
-                        min={EnfusionSchema.Main.properties.gameHostBindPort.minimum}
-                        max={EnfusionSchema.Main.properties.gameHostBindPort.maximum}
+                        name="bindPort"
+                        data={EnfusionSchema.properties.bindPort}
+                        value={formData.bindPort}
+                        min={EnfusionSchema.properties.bindPort.minimum}
+                        max={EnfusionSchema.properties.bindPort.maximum}
                         step="1"
                     />
                     <FormField
-                        label="Host Register Bind Address"
-                        name="gameHostRegisterBindAddress"
-                        data={EnfusionSchema.Main.properties.gameHostRegisterBindAddress}
-                        value={formData.gameHostRegisterBindAddress}
+                        name="publicAddress"
+                        data={EnfusionSchema.properties.publicAddress}
+                        value={formData.publicAddress}
                     />
                     <FormField
-                        label="Host Register Port"
-                        name="gameHostRegisterPort"
-                        data={EnfusionSchema.Main.properties.gameHostRegisterPort}
-                        value={formData.gameHostRegisterPort}
-                        min={EnfusionSchema.Main.properties.gameHostRegisterPort.minimum}
-                        max={EnfusionSchema.Main.properties.gameHostRegisterPort.maximum}
+                        name="publicPort"
+                        data={EnfusionSchema.properties.publicPort}
+                        value={formData.publicPort}
+                        min={EnfusionSchema.properties.publicPort.minimum}
+                        max={EnfusionSchema.properties.publicPort.maximum}
                         step="1"
-                    />
-                    <FormField
-                        label="Admin Password"
-                        name="adminPassword"
-                        data={EnfusionSchema.Main.properties.adminPassword}
-                        value={formData.adminPassword}
                     />
                 </div>
 
@@ -394,20 +442,18 @@ const ServerConfigForm = (props) => {
                     <p></p>
                 </div>
                 <div className="lg:col-span-2">
-                <FormField
-                        label="A2S Address"
-                        name="address"
-                        data={EnfusionSchema.A2S.properties.address}
+                    <FormField
+                        name="a2s.address"
+                        data={EnfusionSchema.definitions.a2s.properties.address}
                         value={formData.a2s.address}
                     />
                     <FormField
-                        label="A2S Port"
-                        name="port"
-                        data={EnfusionSchema.A2S.properties.port}
+                        name="a2s.port"
+                        data={EnfusionSchema.definitions.a2s.properties.port}
                         value={formData.a2s.port}
-                        min={EnfusionSchema.A2S.properties.port.minimum}
-                        max={EnfusionSchema.A2S.properties.port.maximum}
-                        step="1"
+                        min={EnfusionSchema.definitions.a2s.properties.port.minimum}
+                        max={EnfusionSchema.definitions.a2s.properties.port.maximum}
+                        step={EnfusionSchema.definitions.a2s.properties.port.multipleOf}
                     />
                 </div>
                 
@@ -421,7 +467,7 @@ const ServerConfigForm = (props) => {
                     <AsyncFormField
                         label="Mods"
                         name="game.mods"
-                        data={EnfusionSchema.Mods.properties.mods}
+                        data={EnfusionSchema.definitions.game.properties.mods}
                         value={formData.game.mods}
                         method="mods"
                     />
@@ -435,71 +481,45 @@ const ServerConfigForm = (props) => {
                 </div>
                 <div className="lg:col-span-2">
                     <FormField
-                        label="Server Name"
                         name="game.name"
-                        data={EnfusionSchema.Game.properties.name}
+                        data={EnfusionSchema.definitions.game.properties.name}
                         value={formData.game.name}
                     />
                     <FormField
-                        label="Game Number"
-                        name="game.gameNumber"
-                        data={EnfusionSchema.Game.properties.gameNumber}
-                        value={formData.game.gameNumber}
-                        min={EnfusionSchema.Game.properties.gameNumber.minimum}
-                        max={EnfusionSchema.Game.properties.gameNumber.maximum}
-                        step="1"
-                    />
-                    <FormField
-                        label="Server Password"
                         name="game.password"
-                        data={EnfusionSchema.Game.properties.password}
+                        data={EnfusionSchema.definitions.game.properties.password}
                         value={formData.game.password}
                     />
+                    <FormField
+                        name="game.passwordAdmin"
+                        data={EnfusionSchema.definitions.game.properties.passwordAdmin}
+                        value={formData.game.passwordAdmin}
+                    />
                     <AsyncFormField
-                        label="Scenario ID"
                         name="game.scenarioId"
-                        data={EnfusionSchema.Game.properties.scenarioId}
+                        data={EnfusionSchema.definitions.game.properties.scenarioId}
                         value={formData.game.scenarioId}
                         method="scenarios"
                         mods={formData.game.mods}
                     />
                     <FormField
-                        label="Scenario Name"
-                        name="game.scenarioName"
-                        data={EnfusionSchema.Game.properties.scenarioName}
-                        value={formData.game.scenarioName}
-                    />
-                    <FormField
-                        label="Player Limit"
                         name="game.playerCountLimit"
-                        data={EnfusionSchema.Game.properties.playerCountLimit}
+                        data={EnfusionSchema.definitions.game.properties.playerCountLimit}
                         value={formData.game.playerCountLimit}
-                        min={EnfusionSchema.Game.properties.playerCountLimit.minimum}
-                        max={EnfusionSchema.Game.properties.playerCountLimit.maximum}
+                        min={EnfusionSchema.definitions.game.properties.playerCountLimit.minimum}
+                        max={EnfusionSchema.definitions.game.properties.playerCountLimit.maximum}
                         step="1"
-                    />
-                    <FormField
-                        label="Auto Joinable"
-                        name="game.autoJoinable"
-                        data={EnfusionSchema.Game.properties.autoJoinable}
-                        value={formData.game.autoJoinable}
                     />
                     <FormField
                         label="Visible"
                         name="game.visible"
-                        data={EnfusionSchema.Game.properties.visible}
+                        data={EnfusionSchema.definitions.game.properties.visible}
                         value={formData.game.visible}
-                    />
-                    <FormField
-                        label="Game Mode"
-                        name="game.gameMode"
-                        data={EnfusionSchema.Game.properties.gameMode}
-                        value={formData.game.gameMode}
                     />
                     <FormField
                         label="Supported Client Types"
                         name="game.supportedGameClientTypes[]"
-                        data={EnfusionSchema.Game.properties.supportedGameClientTypes}
+                        data={EnfusionSchema.definitions.game.properties.supportedGameClientTypes}
                         value={formData.game.supportedGameClientTypes}
                     />
                 </div>
@@ -512,66 +532,57 @@ const ServerConfigForm = (props) => {
                 </div>
                 <div className="lg:col-span-2">
                     <FormField
-                        label="Server Max View Distance"
                         name="game.gameProperties.serverMaxViewDistance"
-                        data={EnfusionSchema.GameProperties.properties.serverMaxViewDistance}
+                        data={EnfusionSchema.definitions.gameProperties.properties.serverMaxViewDistance}
                         value={formData.game.gameProperties.serverMaxViewDistance}
-                        min={EnfusionSchema.GameProperties.properties.serverMaxViewDistance.minimum}
-                        max={EnfusionSchema.GameProperties.properties.serverMaxViewDistance.maximum}
-                        step="1"
+                        min={EnfusionSchema.definitions.gameProperties.properties.serverMaxViewDistance.minimum}
+                        max={EnfusionSchema.definitions.gameProperties.properties.serverMaxViewDistance.maximum}
+                        step={EnfusionSchema.definitions.gameProperties.properties.serverMaxViewDistance.multipleOf}
                     />
                     <FormField
-                        label="Server Min Grass Distance"
                         name="game.gameProperties.serverMinGrassDistance"
-                        data={EnfusionSchema.GameProperties.properties.serverMinGrassDistance}
+                        data={EnfusionSchema.definitions.gameProperties.properties.serverMinGrassDistance}
                         value={formData.game.gameProperties.serverMinGrassDistance}
-                        min={EnfusionSchema.GameProperties.properties.serverMinGrassDistance.minimum}
-                        max={EnfusionSchema.GameProperties.properties.serverMinGrassDistance.maximum}
-                        step="1"
+                        min={EnfusionSchema.definitions.gameProperties.properties.serverMinGrassDistance.minimum}
+                        max={EnfusionSchema.definitions.gameProperties.properties.serverMinGrassDistance.maximum}
+                        step={EnfusionSchema.definitions.gameProperties.properties.serverMinGrassDistance.multipleOf}
                     />
                     <FormField
-                        label="Netword View Distance"
                         name="game.gameProperties.networkViewDistance"
-                        data={EnfusionSchema.GameProperties.properties.networkViewDistance}
+                        data={EnfusionSchema.definitions.gameProperties.properties.networkViewDistance}
                         value={formData.game.gameProperties.networkViewDistance}
-                        min={EnfusionSchema.GameProperties.properties.networkViewDistance.minimum}
-                        max={EnfusionSchema.GameProperties.properties.networkViewDistance.maximum}
-                        step="1"
+                        min={EnfusionSchema.definitions.gameProperties.properties.networkViewDistance.minimum}
+                        max={EnfusionSchema.definitions.gameProperties.properties.networkViewDistance.maximum}
+                        step={EnfusionSchema.definitions.gameProperties.properties.networkViewDistance.multipleOf}
                     />
                     <FormField
-                        label="Disable Third Person"
                         name="game.gameProperties.disableThirdPerson"
-                        data={EnfusionSchema.GameProperties.properties.disableThirdPerson}
+                        data={EnfusionSchema.definitions.gameProperties.properties.disableThirdPerson}
                         value={formData.game.gameProperties.disableThirdPerson}
                     />
                     <FormField
-                        label="Fast Validation"
                         name="game.gameProperties.fastValidation"
-                        data={EnfusionSchema.GameProperties.properties.fastValidation}
+                        data={EnfusionSchema.definitions.gameProperties.properties.fastValidation}
                         value={formData.game.gameProperties.fastValidation}
                     />
                     <FormField
-                        label="BattlEye"
                         name="game.gameProperties.battlEye"
-                        data={EnfusionSchema.GameProperties.properties.battlEye}
+                        data={EnfusionSchema.definitions.gameProperties.properties.battlEye}
                         value={formData.game.gameProperties.battlEye}
                     />
                     <FormField
-                        label="VON Disable UI"
                         name="game.gameProperties.VONDisableUI"
-                        data={EnfusionSchema.GameProperties.properties.VONDisableUI}
+                        data={EnfusionSchema.definitions.gameProperties.properties.VONDisableUI}
                         value={formData.game.gameProperties.VONDisableUI}
                     />
                     <FormField
-                        label="VON Disable Direct Speech UI"
                         name="game.gameProperties.VONDisableDirectSpeechUI"
-                        data={EnfusionSchema.GameProperties.properties.VONDisableDirectSpeechUI}
+                        data={EnfusionSchema.definitions.gameProperties.properties.VONDisableDirectSpeechUI}
                         value={formData.game.gameProperties.VONDisableDirectSpeechUI}
                     />
                     <FormField
-                        label="Mission Header"
                         name="game.gameProperties.missionHeader"
-                        data={EnfusionSchema.MissionHeader}
+                        data={EnfusionSchema.definitions.gameProperties.properties.missionHeader}
                         value={formData.game.gameProperties.missionHeader}
                     />
                 </div>
@@ -584,52 +595,60 @@ const ServerConfigForm = (props) => {
                 </div>
                 <div className="lg:col-span-2">
                     <FormField
-                        label="Lobby Player Synchronise"
                         name="operating.lobbyPlayerSynchronise"
-                        data={EnfusionSchema.Operating.properties.lobbyPlayerSynchronise}
+                        data={EnfusionSchema.definitions.operating.properties.lobbyPlayerSynchronise}
                         value={formData.operating.lobbyPlayerSynchronise}
                     />
                     <FormField
-                        label="Player Save Time"
                         name="operating.playerSaveTime"
-                        data={EnfusionSchema.Operating.properties.playerSaveTime}
+                        data={EnfusionSchema.definitions.operating.properties.playerSaveTime}
                         value={formData.operating.playerSaveTime}
+                        step="1"
+                    />
+                    <FormField
+                        name="operating.aiLimit"
+                        data={EnfusionSchema.definitions.operating.properties.aiLimit}
+                        value={formData.operating.aiLimit}
+                        min={EnfusionSchema.definitions.operating.properties.aiLimit.minimum}
+                        max={EnfusionSchema.definitions.operating.properties.aiLimit.maximum}
                         step="1"
                     />
                 </div>
             </div>
-
-            <div className="bg-white rounded shadow-lg p-4 px-4 md:p-8 mb-6">
-                <div className="text-gray-600 mb-2">
-                    <p className="font-medium text-lg">Config</p>
-                    <p></p>
-                </div>
-                <div className="lg:col-span-2">
-                    <CodeEditor
-                        value={JSON.stringify(formDataClean, null, 4)}
-                        language="json"
-                        minHeight={500}
-                    />
-                </div>
-                <div className="lg:col-span-2 mt-3">
-                    <button
-                        onClick={() => exportConfig('config', formDataClean)}
-                        className='rounded-lg px-4 py-2 bg-blue-500 text-blue-100 hover:bg-blue-600 duration-300'
-                    >
-                        <div className="flex justify-center items-center relative">
-                            <svg width="9" height="11" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path className="download-arrow" d="M13 9L9 13M9 13L5 9M9 13V1" stroke="#F2F2F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M1 17V18C1 18.7956 1.31607 19.5587 1.87868 20.1213C2.44129 20.6839 3.20435 21 4 21H14C14.7956 21 15.5587 20.6839 16.1213 20.1213C16.6839 19.5587 17 18.7956 17 18V17" stroke="#F2F2F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            <span className="pl-2 leading-none">Download</span>
-                        </div>
-                    </button>
-                </div>
-            </div>
-            
-            {/* small hack to allow TailwindCSS reconizing dynamic classes */}
-            <span className='form-input form-select form-checkbox hidden'></span>
 		</Form>
+
+        <div className="bg-white rounded shadow-lg p-4 px-4 md:p-8 mb-6">
+        <div className="text-gray-600 mb-2">
+            <p className="font-medium text-lg">Config</p>
+            <p></p>
+        </div>
+        <div className="lg:col-span-2">
+            <CodeEditor
+                value={JSON.stringify(formDataClean, null, 4)}
+                language="json"
+                minHeight={500}
+            />
+        </div>
+        <div className="lg:col-span-2 mt-3">
+            <button
+                onClick={() => exportConfig('config', formDataClean)}
+                className='rounded-lg px-4 py-2 bg-blue-500 text-blue-100 hover:bg-blue-600 duration-300'
+            >
+                <div className="flex justify-center items-center relative">
+                    <svg width="9" height="11" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path className="download-arrow" d="M13 9L9 13M9 13L5 9M9 13V1" stroke="#F2F2F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 17V18C1 18.7956 1.31607 19.5587 1.87868 20.1213C2.44129 20.6839 3.20435 21 4 21H14C14.7956 21 15.5587 20.6839 16.1213 20.1213C16.6839 19.5587 17 18.7956 17 18V17" stroke="#F2F2F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className="pl-2 leading-none">Download</span>
+                </div>
+            </button>
+        </div>
+        </div>
+
+        {/* small hack to allow TailwindCSS reconizing dynamic classes */}
+        <span className='form-input form-select form-checkbox hidden'></span>
+
+        </>
 	);
 }
 
