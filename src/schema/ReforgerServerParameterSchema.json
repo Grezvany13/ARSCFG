@@ -1,0 +1,320 @@
+{
+    "title": "Arma Reforger Server Parameters",
+    "description": "",
+    "type": "object",
+    "properties": {
+        "hosting": {
+            "$ref": "#/definitions/hosting"
+        },
+        "network": {
+            "$ref": "#/definitions/network"
+        },
+        "debug": {
+            "$ref": "#/definitions/debug"
+        }
+    },
+    "definitions": {
+        "hosting": {
+            "title": "Hosting",
+            "description": "",
+            "type": "object",
+            "properties": {
+                "a2sIpAddress": {
+                    "type": "string",
+                    "format": "ipv4",
+                    "default": "",
+                    "title": "a2sIpAddress",
+                    "description": "-a2sIpAddress sets Steam Query Protocol's Bind IP address.",
+                    "htmlDescription": "<code>-a2sIpAddress</code> sets Steam Query Protocol's Bind IP address."
+                },
+                "a2sPort": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "multipleOf": 1,
+                    "default": 17777,
+                    "title": "a2sPort",
+                    "description": "-a2sPort sets Steam Query Protocol's Bind port.",
+                    "htmlDescription": "<code>-a2sPort</code> sets Steam Query Protocol's Bind port."
+                },
+                "autoreload": {
+                    "type": "number",
+                    "minimum": 0,
+                    "multipleOf": 1,
+                    "default": 0,
+                    "title": "autoreload",
+                    "description": "-autoreload reloads the scenario when the session ends after the provided delay, without shutting down the server. Value is in seconds.",
+                    "htmlDescription": "<code>-autoreload</code> reloads the scenario when the session ends after the provided delay, without shutting down the server. Value is in seconds."
+                },
+                "bindIP": {
+                    "type": "string",
+                    "format": "ipv4",
+                    "default": "",
+                    "title": "bindIP",
+                    "description": "-bindIP can be used to override both gameHostBindAddress and gameHostRegisterBindAddress values present in server config.",
+                    "htmlDescription": "<code>-bindIP</code> can be used to override both <code>gameHostBindAddress</code> and gameHostRegisterBindAddress values present in server config."
+                },
+                "bindPort": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "multipleOf": 1,
+                    "default": 2001,
+                    "title": "bindPort",
+                    "description": "-bindPort can be used to override both gameHostBindPort and gameHostRegisterBindPort values present in server config.",
+                    "htmlDescription": "<code>-bindPort</code> can be used to override both <code>gameHostBindPort</code> and <code>gameHostRegisterBindPort</code> values present in server config."
+                },
+                "config": {
+                    "type": "string",
+                    "default": "",
+                    "title": "config",
+                    "description": "-config is used by servers to point to a JSON server configuration.",
+                    "htmlDescription": "<code>-config</code> is used by servers to point to a JSON server configuration."
+                },
+                "listScenarios": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "listScenarios",
+                    "description": "-listScenarios prints to game logs the scenario .conf file paths.",
+                    "htmlDescription": "<code>-listScenarios</code> prints to game logs the scenario .conf file paths."
+                },
+                "logStats": {
+                    "anyOf": [
+                        {
+                            "type": "number",
+                            "minimum": 0,
+                            "multipleOf": 1
+                        },
+                        {
+                            "type": "boolean"
+                        }
+                    ],
+                    "default": false,
+                    "title": "logStats",
+                    "description": "-logStats allows to log performance statistics every (optionally) defined interval (in milliseconds).",
+                    "htmlDescription": "<code>-logStats</code> allows to log performance statistics every (optionally) defined interval (in milliseconds)."
+                },
+                "maxFPS": {
+                    "type": "number",
+                    "multipleOf": 1,
+                    "default": 0,
+                    "title": "maxFPS",
+                    "description": "-maxFPS sets max FPS limit - useful for a server, or to force a client's max FPS.",
+                    "htmlDescription": "<code>-maxFPS</code> sets max FPS limit - useful for a server, or to force a client's max FPS."
+                },
+                "client": {
+                    "type": "string",
+                    "format": "ipv4",
+                    "default": "",
+                    "title": "client",
+                    "description": "-client starts up an RplSession in local client mode. The session tries to connect to the provided IP.",
+                    "htmlDescription": "<code>-client</code> starts up an RplSession in local client mode. The session tries to connect to the provided IP."
+                },
+                "loadSaveFile": {
+                    "type": "string",
+                    "default": "",
+                    "title": "loadSaveFile",
+                    "description": "EXPERIMENTAL"
+                }
+            },
+            "required": ["config"]
+        },
+        "network": {
+            "title": "Network",
+            "description": "",
+            "type": "object",
+            "properties": {
+                "nds": {
+                    "type": "number",
+                    "multipleOf": 1,
+                    "minimum": 0,
+                    "default": 2,
+                    "title": "nds",
+                    "description": "-nds Network Dynamic Simulation (nds) is a server feature that only streams in relevant replicated entities for each client. the provided value stands for diameter, or the number of cells which are being replicated - default is 2 in each direction. To turn the feature off use -nds 0. A higher diameter will result in a bigger networked view range, lower server performance.",
+                    "htmlDescription": "<code>-nds</code> Network Dynamic Simulation (nds) is a server feature that only streams in relevant replicated entities for each client. the provided value stands for diameter, or the number of cells which are being replicated - default is 2 in each direction. To turn the feature off use -nds 0. A higher diameter will result in a bigger networked view range, lower server performance."
+                },
+                "nwkResolution": {
+                    "type": "number",
+                    "minimum": 100,
+                    "maximum": 1000,
+                    "multipleOf": 1,
+                    "default": 500,
+                    "title": "nwkResolution",
+                    "description": "-nwkResolution defines what resolution Spatial Map cells should be set at in a 100..1000m range. Smaller resolution will result in less 'pop-in' but lower networked view range. For high view range use high resolution, but small diameter.",
+                    "htmlDescription": "<code>-nwkResolution</code> defines what resolution Spatial Map cells should be set at in a 100..1000m range. Smaller resolution will result in less 'pop-in' but lower networked view range. For high view range use high resolution, but small diameter."
+                },
+                "rpl-reconnect": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "rpl-reconnect",
+                    "description": "-rpl-reconnect makes the replication try to reconnect instead of immediately raising connection failure.",
+                    "htmlDescription": "<code>-rpl-reconnect</code> makes the replication try to reconnect instead of immediately raising connection failure."
+                },
+                "rpl-timeout-disable": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "rpl-timeout-disable",
+                    "description": "-rpl-timeout-disable disables client/server timeout.",
+                    "htmlDescription": "<code>-rpl-timeout-disable</code> disables client/server timeout."
+                },
+                "rpl-timeout-ms": {
+                    "type": "number",
+                    "multipleOf": 1,
+                    "minimum": 0,
+                    "default": 0,
+                    "title": "rpl-timeout-ms",
+                    "description": "-rpl-timeout-ms sets the client/server timeout's value, in milliseconds.",
+                    "htmlDescription": "<code>-rpl-timeout-ms</code> sets the client/server timeout's value, in milliseconds."
+                },
+                "rpl-validation-rdb-disable": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "rpl-validation-rdb-disable",
+                    "description": "-rpl-validation-rdb-disable disables the validation of clients resource database. This should not be disabled in normal usage conditions. This is for development purpose only!",
+                    "htmlDescription": "<code>-rpl-validation-rdb-disable</code> disables the validation of clients resource database. <warning>This should not be disabled in normal usage conditions. This is for development purpose only!</warning>"
+                },
+                "rpl-validation-scr-disable": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "rpl-validation-scr-disable",
+                    "description": "Disables the validation of clients scripts checksum. This should not be disabled in normal usage conditions. This is for development purpose only!",
+                    "htmlDescription": "Disables the validation of clients scripts checksum. <warning>This should not be disabled in normal usage conditions. This is for development purpose only!</warning>"
+                },
+                "rpl-validation-version-disable": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "rpl-validation-version-disable",
+                    "description": "Disables the validation of clients executable version. This should not be disabled in normal usage conditions. This is for development purpose only!",
+                    "htmlDescription": "Disables the validation of clients executable version. <warning>This should not be disabled in normal usage conditions. This is for development purpose only!</warning>"
+                },
+                "staggeringBudget": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 10201,
+                    "multipleOf": 1,
+                    "default": 5000,
+                    "title": "staggeringBudget",
+                    "description": "-staggeringBudget defines how many stationary spatial map cells are allowed to be processed in one tick in 1..10201 range. If not set it uses '-nds' diameter. A lower number will limit how many cells the server has to process per tick, but increase the time it takes for a client to have all relevant entities streamed in, if the server experiences significant performance drops on spawning/teleporting then the number is set too high, if you the client experiences 'pop-in' of replicated items then the number is set too low.",
+                    "htmlDescription": "<code>-staggeringBudget</code> defines how many stationary spatial map cells are allowed to be processed in one tick in 1..10201 range. If not set it uses '-nds' diameter. A lower number will limit how many cells the server has to process per tick, but increase the time it takes for a client to have all relevant entities streamed in, if the server experiences significant performance drops on spawning/teleporting then the number is set too high, if you the client experiences 'pop-in' of replicated items then the number is set too low."
+                },
+                "streamingBudget": {
+                    "type": "number",
+                    "minimum": 100,
+                    "maximum": 10201,
+                    "multipleOf": 1,
+                    "default": 500,
+                    "title": "streamingBudget",
+                    "description": "-streamingBudget is the global streaming budget that is equally distributed between all connections. To decrement the budget, it uses the replicated hierarchy size of each entity that needs to be streamed in. It cannot go under 100 to prevent the system stalling. A lower number will limit how many entities the server has to process per tick, but increase the time it takes for a client to have that entity streamed in, if the server experiences significant performance drops on spawning/teleporting then the number is set too high, if the client experiences 'pop-in' of replicated items then the number is set too low.",
+                    "htmlDescription": "<code>-streamingBudget</code> is the global streaming budget that is equally distributed between all connections. To decrement the budget, it uses the replicated hierarchy size of each entity that needs to be streamed in. It cannot go under 100 to prevent the system stalling. A lower number will limit how many entities the server has to process per tick, but increase the time it takes for a client to have that entity streamed in, if the server experiences significant performance drops on spawning/teleporting then the number is set too high, if the client experiences 'pop-in' of replicated items then the number is set too low."
+                },
+                "streamsDelta": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "multipleOf": 1,
+                    "default": 100,
+                    "title": "streamsDelta",
+                    "description": "-streamsDelta is a tool to limit the amount of streams being opened for a client in range 1..1000 (default 100). If the difference between 'the number of streams the server has open' and 'the number of streams the client has open' is larger than the NUMBER then the server will not open any more streams this tick. To be adjusted based on average client networking speed.",
+                    "htmlDescription": "<code>-streamsDelta</code> is a tool to limit the amount of streams being opened for a client in range 1..1000 (default 100). If the difference between 'the number of streams the server has open' and 'the number of streams the client has open' is larger than the NUMBER then the server will not open any more streams this tick. To be adjusted based on average client networking speed."
+                }
+            }
+        },
+        "debug": {
+            "title": "Debug",
+            "description": "",
+            "type": "object",
+            "properties": {
+                "aiLimit": {
+                    "type": "number",
+                    "default": -1,
+                    "minimum": -1,
+                    "maximum": 9999,
+                    "title": "aiLimit",
+                    "description": "-aiLimit sets the top limit of AIs. No systems will be able to spawn any AIs when this ceiling is reached (through aiWorld.CanAICharacterBeAdded() - see also SCR_AIGroup and SCR_ChimeraAIAgent).",
+                    "htmlDescription": "<code>-aiLimit</code> sets the top limit of AIs. No systems will be able to spawn any AIs when this ceiling is reached (through <code>aiWorld.CanAICharacterBeAdded()</code> - see also <a href='enfusion://ScriptEditor/scripts/Game/Entities/SCR_AIGroup.c;53'>SCR_AIGroup</a> and <a href='enfusion://ScriptEditor/scripts/Game/AI/SCR_ChimeraAIAgent.c;5'>SCR_ChimeraAIAgent</a>)."
+                },
+                "debugger": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "format": "ipv4"
+                        },
+                        {
+                            "type": "string",
+                            "format": "hostname"
+                        }
+                    ],
+                    "default": "localhost",
+                    "title": "debugger",
+                    "description": "-debugger sets the script debugger to a specific address.",
+                    "htmlDescription": "<code>-debugger</code> sets the script debugger to a specific address."
+                },
+                "debuggerPort": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "default": 1000,
+                    "multipleOf": 1,
+                    "title": "debuggerPort",
+                    "description": "-debuggerPort sets the script debugger to a specific port.",
+                    "htmlDescription": "<code>-debuggerPort</code> sets the script debugger to a specific port."
+                },
+                "disableCrashReporter": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "disableCrashReporter",
+                    "description": "Disable Crash Reporter from appearing/sending reports automatically."
+                },
+                "disableShadersBuild": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "disableShadersBuild",
+                    "description": "-disableShadersBuild disables shaders generation.",
+                    "htmlDescription": "<code>-disableShadersBuild</code> disables shaders generation."
+                },
+                "generateShaders": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "generateShaders",
+                    "description": "-generateShaders forces shaders generation.",
+                    "htmlDescription": "<code>-generateShaders</code> forces shaders generation."
+                },
+                "keepNumOfLogs": {
+                    "type": "number",
+                    "default": 10,
+                    "title": "keepNumOfLogs",
+                    "description": "-keepNumOfLogs sets the maximum amount of logs to keep (default: 10).",
+                    "htmlDescription": "<code>-keepNumOfLogs</code> sets the maximum amount of logs to keep (default: 10)."
+                },
+                "log-rdb-checksum": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "log-rdb-checksum",
+                    "description": "-log-rdb-checksum enables logging detailed information about RDB checksum computation (GUID and path in order in which they are added to checksum) for RDB checksum issues debugging.",
+                    "htmlDescription": "<code>-log-rdb-checksum</code> enables logging detailed information about RDB checksum computation (GUID and path in order in which they are added to checksum) for RDB checksum issues debugging."
+                },
+                "log-scr-checksum": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "log-scr-checksum",
+                    "description": "-log-scr-checksum enables the logging of all script files used in compilation and their checksums.",
+                    "htmlDescription": "<code>-log-scr-checksum</code> enables the logging of all script files used in compilation and their checksums."
+                },
+                "logAppend": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "logAppend",
+                    "description": "-logAppend makes logs to not be emptied on game start, keeping the history.",
+                    "htmlDescription": "<code>-logAppend</code> makes logs to not be emptied on game start, keeping the history."
+                },
+                "logFS": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "logFS",
+                    "description": "-logFS logs every F'ile System's read/write operation in filesystem.log. This option is very demanding and can produce a big file in a short time, so it is to use with caution for debug purpose.",
+                    "htmlDescription": "<code>-logFS</code> logs every File System's read/write operation in filesystem.log. This option is very demanding and can produce a big file in a short time, so it is to use with caution for debug purpose."
+                }
+            }
+        }
+    }
+}

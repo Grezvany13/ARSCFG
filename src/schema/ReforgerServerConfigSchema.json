@@ -1,0 +1,268 @@
+{
+    "title": "Arma Reforger Server Config",
+    "description": "",
+    "type": "object",
+    "properties": {
+        "bindAddress": {
+            "type": "string",
+            "format": "ipv4",
+            "default": "",
+            "title": "Bind Address",
+            "description": "IP address to which the server socket will be bound. In most cases, this should be left empty. It can be used to restrict connections to particular network interface. When left out or empty, 0.0.0.0 is used, which allows connections through any IP address."
+        },
+        "bindPort": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 65535,
+            "multipleOf": 1,
+            "default": 2001,
+            "title": "Bind Port",
+            "description": "UDP port to which the server socket will be bound."
+        },
+        "publicAddress": {
+            "type": "string",
+            "format": "ipv4",
+            "default": "",
+            "title": "Public Address",
+            "description": "IP address registered in backend. This should be set to the public IP address to which clients can connect in order to reach the server (either IP of the server itself or IP of the machine that will forward data to the server). When left out or empty, an attempt is made to automatically determine the IP address, but this will often fail and should not be relied upon as the server might not be reachable from public networks."
+        },
+        "publicPort": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 65535,
+            "multipleOf": 1,
+            "default": 2001,
+            "title": "Public Port",
+            "description": "UDP port registered in backend. If the server itself has a public IP address, this should be the same value as in 'bindPort'. Otherwise, this is the UDP port that is forwarded to the server."
+        },
+        "a2s": {
+            "$ref": "#/definitions/a2s"
+        },
+        "game": {
+            "$ref": "#/definitions/game"
+        },
+        "operating": {
+            "$ref": "#/definitions/operating"
+        }
+    },
+    "definitions": {
+        "game": {
+            "title": "Game",
+            "description": "",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "title": "Name",
+                    "description": ""
+                },
+                "password": {
+                    "type": "string",
+                    "title": "Password",
+                    "pattern": "([a-zA-Z0-9*.!@#$%^&.?_+-]*)$",
+                    "description": "Password required to join the server."
+                },
+                "passwordAdmin": {
+                    "type": "string",
+                    "title": "Admin Password",
+                    "description": "Defines the server's admin password, allows a server administrator to login and control the server, to access this either open the chat input box by pressing C in the lobby or Enter ↵ in-game followed by: #login [the admin password]"
+                },
+                "scenarioId": {
+                    "type": "string",
+                    "title": "scenarioId",
+                    "description": "The scenario's .conf file path is defined here.",
+                    "pattern": "^{[A-Z0-9]{16}}([a-zA-Z0-9]+\/)*[a-zA-Z0-9_]+.conf$",
+                    "minLength": 0
+                },
+                "playerCountLimit": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 256,
+                    "default": 127,
+                    "title": "playerCountLimit",
+                    "description": "Set the maximum amount of players on the server."
+                },
+                "visible": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "visible",
+                    "description": "Set the visibility of the server in the Server Browser."
+                },
+                "crossPlatform": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "crossPlatform",
+                    "description": "If set to true, automatically adds 'PLATFORM_PC' and 'PLATFORM_XBL' to 'supportedGameClientTypes' if they are missing; does nothing if set to false."
+                },
+                "supportedPlatforms": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string",
+                        "enum": ["PLATFORM_PC", "PLATFORM_XBL"]
+                    },
+                    "uniqueItems": true,
+                    "title": "Supported Platforms",
+                    "description": "Define the platforms which the server accepts, allowing crossplay. A server cannot be Xbox-exclusive; if configured with only PLATFORM_XBL, the server will not start.",
+                    "htmlDescription": "Define the platforms which the server accepts, allowing crossplay. <info>A server cannot be Xbox-exclusive; if configured with only PLATFORM_XBL, the server will not start.</info>"
+                },
+                "gameProperties": {
+                    "$ref": "#/definitions/gameProperties"
+                },
+                "mods": {
+                    "type": "array",
+                    "title": "Mods",
+                    "description": "The list of mods required by the client. They will automatically be downloaded and activated on join.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "title": "name",
+                                "description": "This parameter doesn't do anything and is only used as sort of comment, with human readable name of the mod"
+                            },
+                            "modID": {
+                                "type": "string",
+                                "title": "modID",
+                                "description": "GUID of the mod. It can be obtained from i.e. Workbench options when mod is running or directly from gproj file",
+                                "pattern": "^[A-Z0-9]{16}$",
+                                "minLength": 0
+                            },
+                            "version": {
+                                "type": "string",
+                                "title": "version",
+                                "description": "The version mod parameter is optional. If it missing, the latest mod version will be used."
+                            }
+                        },
+                        "required": ["modID"]
+                    }
+                }
+            },
+            "required": ["name", "scenarioId", "passwordAdmin"]
+        },
+        "operating": {
+            "title": "Operating",
+            "description": "",
+            "type": "object",
+            "properties": {
+                "lobbyPlayerSynchronise": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "lobbyPlayerSynchronise",
+                    "description": "If enabled, the list of player identities present on server is sent to the GameAPI along with the server's heartbeat. This setting fixes the discrepancy between the real and reported number of players on the server."
+                },
+                "playerSaveTime": {
+                    "type": "number",
+                    "default": 120,
+                    "title": "playerSaveTime",
+                    "description": "Default period in seconds for saving players for both Online and Local storage (player save can still be requested on demand)."
+                },
+                "aiLimit": {
+                    "type": "number",
+                    "default": -1,
+                    "minimum": -1,
+                    "maximum": 9999,
+                    "title": "aiLimit",
+                    "description": "Sets the top limit of AIs. No system will be able to spawn any AIs when this ceiling is reached (through <code>aiWorld.CanAICharacterBeAdded()</code>) A negative number is not considered as valid value and is then ignored - limit is not applied."
+                }
+            }
+        },
+        "a2s": {
+            "title": "A2S",
+            "description": "",
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "format": "ipv4",
+                    "default": "",
+                    "title": "address",
+                    "description": "IP address to which A2S socket will be bound. It can be used to restrict A2S queries to a particular network interface."
+                },
+                "port": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "multipleOf": 1,
+                    "default": 17777,
+                    "title": "port",
+                    "description": "Change Steam Query UDP port on which game listens to A2S requests"
+                }
+            }
+        },
+        "gameProperties": {
+            "title": "Game Properties",
+            "description": "",
+            "type": "object",
+            "properties": {
+                "serverMaxViewDistance": {
+                    "type": "number",
+                    "minimum": 500,
+                    "maximum": 10000,
+                    "multipleOf": 1,
+                    "default": 1600,
+                    "title": "serverMaxViewDistance",
+                    "description": ""
+                },
+                "serverMinGrassDistance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 150,
+                    "multipleOf": 1,
+                    "default": 0,
+                    "title": "serverMinGrassDistance",
+                    "description": "Minimum grass distance in meters. If set to 0 no distance is forced upon clients."
+                },
+                "fastValidation": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "fastValidation",
+                    "description": "Validation of map entities and components loaded on client when it joins, ensuring things match with initial server state. Always set this value to true for a public server!",
+                    "htmlDescription": "Validation of map entities and components loaded on client when it joins, ensuring things match with initial server state. <warning>Always set this value to true for a public server!</warning>"
+                },
+                "networkViewDistance": {
+                    "type": "number",
+                    "minimum": 500,
+                    "maximum": 5000,
+                    "multipleOf": 1,
+                    "default": 1500,
+                    "title": "networkViewDistance",
+                    "description": "Maximum network streaming range of replicated entities."
+                },
+                "battlEye": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "battlEye",
+                    "description": "true to enable BattlEye, false to disable it."
+                },
+                "disableThirdPerson": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "disableThirdPerson",
+                    "description": "Force clients to use the first-person view."
+                },
+                "VONDisableUI": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "VONDisableUI",
+                    "description": "Force clients to not have VON (Voice Over Network) UI."
+                },
+                "VONDisableDirectSpeechUI": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "VONDisableUI",
+                    "description": "Force clients to not have VON (Voice Over Network) Direct Speech UI."
+                },
+                "missionHeader": {
+                    "type": "object",
+                    "title": "missionHeader",
+                    "default": {},
+                    "pattern": "{.*:{.*:.*}}",
+                    "description": "This property overwrites the scenario's SCR_MissionHeaderCampaign.",
+                    "htmlDescription": "This property overwrites the scenario's <a href='enfusion://ScriptEditor/scripts/Game/Mission/SCR_MissionHeaderCampaign.c;1'>SCR_MissionHeaderCampaign</a>."
+                }
+            }
+        }
+    }
+}

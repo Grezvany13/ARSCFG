@@ -1,0 +1,105 @@
+{
+    "title": "Arma Reforger Client Startup Parameters",
+    "description": "",
+    "type": "object",
+    "properties": {
+        "general": {
+            "$ref": "#/definitions/general"
+        }
+    },
+    "definitions": {
+        "general": {
+            "addons": {
+                "type": "string",
+                "default": "",
+                "pattern": "^[A-Z0-9]{16}(,[A-Z0-9]{16})*$",
+                "title": "-addons",
+                "description": "-addons takes a list of mod IDs (specified in their gproj files, without brackets) to be loaded on game start, separated by a comma ','. Mods are searched in profile/addons, in <executableDir>/addons and in directories specified by -addonsDir"
+            },
+            "addonsDir": {
+                "type": "string",
+                "default": "",
+                "pattern": "^.*(,.*)*$",
+                "title": "-addonsDir",
+                "description": "-addonsDir specifies additional directories in which the game must look for mods to load, separated by a comma ','."
+            },
+            "addonDownloadDir": {
+                "type": "string",
+                "default": "",
+                "title": "-addonDownloadDir",
+                "description": "-addonDownloadDir specifies where the game and the Workshop should download addons."
+            },
+            "GPUAdapter": {
+                "type": "number",
+                "default": 0,
+                "title": "-GPUAdapter",
+                "description": "-GPUAdapter forces to use the graphic card at the provided index. GPU index can be found using DxDiag"
+            },
+            "language": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "en_us",
+                        "fr_fr",
+                        "it_it",
+                        "de_de",
+                        "es_es",
+                        "cs_cz",
+                        "pl_pl",
+                        "ru_ru",
+                        "ja_jp",
+                        "ko_kr",
+                        "pt_br",
+                        "zh_cn"
+                    ]
+                },
+                "uniqueItems": true,
+                "title": "-language",
+                "description": "-language sets the game language by language code - supported language codes depends on StringTable which is set in gproj."
+            },
+            "noBackend": {
+                "type": "boolean",
+                "default": false,
+                "title": "-noBackend",
+                "description": "-noBackend disables backend-related http communication."
+            },
+            "noSound": {
+                "type": "boolean",
+                "default": false,
+                "title": "-noSound",
+                "description": "-noSound disables the sound system processing."
+            },
+            "noSplash": {
+                "type": "boolean",
+                "default": false,
+                "title": "-noSplash",
+                "description": "-noSplash skips splash screens on game load."
+            },
+            "noThrow": {
+                "type": "boolean",
+                "default": false,
+                "title": "-noThrow",
+                "description": "-noThrow disables all kinds of error message dialogs. (VME's, asserts, crashes, ...)."
+            },
+            "profile": {
+                "type": "string",
+                "default": "",
+                "title": "-profile",
+                "description": "-profile defines the path to the profile directory to be used, either by parent directory name or by path."
+            },
+            "singleThreadedUpdate": {
+                "type": "boolean",
+                "default": false,
+                "title": "-singleThreadedUpdate",
+                "description": "-singleThreadedUpdate disables multithreaded update."
+            },
+            "world": {
+                "type": "string",
+                "default": "",
+                "title": "-world",
+                "description": "-world defines the world file to be loaded on startup, both absolute and relative paths are supported although it is recommended to use path relative to created filesystems (eg. worlds/myworld.ent). Workbench ignores this parameter - for that, use -load parameter instead."
+            }
+        }
+    }
+}
